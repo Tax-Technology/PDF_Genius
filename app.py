@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import tempfile
 from PyPDF2 import PdfFileReader, PdfFileWriter
@@ -5,6 +6,13 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains.summarize import load_summarize_chain
 from langchain.docstore.document import Document
 from langchain.chains.question_answering import load_qa_chain
+
+# Get your OpenAI API key from GitHub Codespaces secrets
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+# Apply pink unicorn theme
+page_bg_color = "linear-gradient(45deg, #f9a7b0, #fff6d6)"
+st.set_page_config(page_title="Elaine’s PDF Assistant", page_icon="🦄", layout="wide", page_bg_color=page_bg_color)
 
 class CharacterTextSplitter:
     def __init__(self, separator="\n", chunk_size=800, chunk_overlap=200, length_function=len):
@@ -28,7 +36,7 @@ class CharacterTextSplitter:
             chunks.append("".join(current_chunk))
         return chunks
 
-llm = OpenAIEmbeddings(openai_api_key="YOUR_OPENAI_API_KEY", temperature=0)
+llm = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, temperature=0)
 
 def summarize(pages, page_number):
     view = pages[page_number - 1]
@@ -44,7 +52,7 @@ def answer_question(pages, question):
     return answer
 
 if __name__ == "__main__":
-    st.title("PDF Summarizer & QA")
+    st.title("Elaine’s PDF Assistant")
     pdf_file = st.file_uploader("Choose a PDF file", type="pdf")
 
     if pdf_file is not None:
