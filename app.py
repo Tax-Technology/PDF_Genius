@@ -44,7 +44,11 @@ class CharacterTextSplitter:
             chunks.append("".join(current_chunk))
         return chunks
 
-llm = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, temperature=0)
+try:
+    llm = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, temperature=0)
+except Exception as e:
+    st.error("Error initializing OpenAIEmbeddings. Please check your OpenAI API key.")
+    st.stop()
 
 def summarize(pages, page_number):
     view = pages[page_number - 1]
@@ -58,6 +62,8 @@ def answer_question(pages, question):
     chain = load_qa_chain(llm, chain_type="seq2seq")
     answer = chain.run(pages, question)
     return answer
+
+# ... (rest of the code remains unchanged)
 
 if __name__ == "__main__":
     st.title("Elaine’s PDF Assistant")
