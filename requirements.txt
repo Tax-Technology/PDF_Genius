@@ -1,5 +1,5 @@
-streamlit
-tempfile
-PyPDF2
-langchain
-openai
+streamlit==1.25.0
+tempfile==1.0.0
+PyPDF2==2.1.2
+langchain==0.9.11
+openai==0.17.
