@@ -11,7 +11,6 @@ openai_api_key = ""
 
 # Apply pink unicorn theme
 page_bg_color = "linear-gradient(45deg, #f9a7b0, #fff6d6)"
-st.set_page_config(page_title="Elaine’s PDF Assistant", page_icon="🦄", layout="wide", page_bg_color=page_bg_color)
 
 class CharacterTextSplitter:
     def __init__(self, separator="\n", chunk_size=800, chunk_overlap=200, length_function=len):
@@ -35,7 +34,22 @@ class CharacterTextSplitter:
             chunks.append("".join(current_chunk))
         return chunks
 
+def summarize(pages, page_number):
+    view = pages[page_number - 1]
+    texts = text_splitter.split_text(view.page_content)
+    docs = [Document(page_content=t) for t in texts]
+    chain = load_summarize_chain(llm, chain_type="map_reduce")
+    summaries = chain.run(docs)
+    return summaries
+
+def answer_question(pages, question):
+    chain = load_qa_chain(llm, chain_type="seq2seq")
+    answer = chain.run(pages, question)
+    return answer
+
 if __name__ == "__main__":
+    st.set_page_config(page_title="Elaine’s PDF Assistant", page_icon="🦄", layout="wide", page_bg_color=page_bg_color)
+
     st.title("Elaine’s PDF Assistant")
 
     # Allow user to input their OpenAI API key
