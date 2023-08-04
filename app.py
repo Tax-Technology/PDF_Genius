@@ -11,8 +11,16 @@ from langchain.chains.question_answering import load_qa_chain
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Apply pink unicorn theme
-page_bg_color = "linear-gradient(45deg, #f9a7b0, #fff6d6)"
-st.set_page_config(page_title="Elaine’s PDF Assistant", page_icon="🦄", layout="wide", page_bg_color=page_bg_color)
+st.markdown(
+    """
+    <style>
+    .reportview-container {
+        background: linear-gradient(45deg, #f9a7b0, #fff6d6);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 class CharacterTextSplitter:
     def __init__(self, separator="\n", chunk_size=800, chunk_overlap=200, length_function=len):
