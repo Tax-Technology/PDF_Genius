@@ -1,0 +1,5 @@
+streamlit
+tempfile
+PyPDF2
+langchain
+openai
