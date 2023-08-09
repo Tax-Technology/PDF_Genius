@@ -1,6 +1,6 @@
 import streamlit as st
 import tempfile
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains.summarize import load_summarize_chain
 from langchain.docstore.document import Document
@@ -49,7 +49,7 @@ if __name__ == "__main__":
             with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
                 tmp_file.write(pdf_file.read())
                 pdf_path = tmp_file.name
-                reader = PdfFileReader(pdf_path)
+                reader = PdfReader(pdf_path)
                 pages = reader.pages
 
             page_selection = st.radio("Page selection", ["Single page", "Page range", "Overall Summary", "Question"])
