@@ -9,9 +9,6 @@ from langchain.chains.question_answering import load_qa_chain
 # Initialize OpenAI API key variable
 openai_api_key = ""
 
-# Apply pink unicorn theme
-page_bg_color = "linear-gradient(45deg, #f9a7b0, #fff6d6)"
-
 class CharacterTextSplitter:
     def __init__(self, separator="\n", chunk_size=800, chunk_overlap=200, length_function=len):
         self.separator = separator
@@ -37,8 +34,6 @@ def answer_question(pages, question, cache={}):
     return answer
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="Elaine’s PDF Assistant", page_icon="🦄", layout="wide", page_bg_color=page_bg_color)
-
     st.title("Elaine’s PDF Assistant")
 
     # Allow user to input their OpenAI API key
