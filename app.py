@@ -20,31 +20,20 @@ class CharacterTextSplitter:
         self.length_function = length_function
 
     def split_text(self, text_content):
-        chunks = []
-        current_chunk = []
-        for i in range(len(text_content)):
-            if i % self.chunk_size == 0:
-                if current_chunk:
-                    chunks.append("".join(current_chunk))
-                    current_chunk = []
-            current_chunk.append(text_content[i])
-            if i - self.chunk_overlap >= 0 and i % self.chunk_size == self.chunk_overlap - 1:
-                current_chunk = []
-        if current_chunk:
-            chunks.append("".join(current_chunk))
-        return chunks
+        return [text_content[i:i+self.chunk_size] for i in range(0, len(text_content), self.chunk_size-self.chunk_overlap)]
 
-def summarize(pages, page_number):
+def summarize(text_splitter, pages, page_number):
     view = pages[page_number - 1]
-    texts = text_splitter.split_text(view.page_content)
-    docs = [Document(page_content=t) for t in texts]
     chain = load_summarize_chain(llm, chain_type="map_reduce")
-    summaries = chain.run(docs)
+    summaries = chain.run(Document(page_content=t) for t in text_splitter.split_text(view.page_content))
     return summaries
 
-def answer_question(pages, question):
+def answer_question(pages, question, cache={}):
+    if question in cache:
+        return cache[question]
     chain = load_qa_chain(llm, chain_type="seq2seq")
     answer = chain.run(pages, question)
+    cache[question] = answer
     return answer
 
 if __name__ == "__main__":
@@ -72,7 +61,8 @@ if __name__ == "__main__":
 
             if page_selection == "Single page":
                 page_number = st.number_input("Enter page number", min_value=1, max_value=len(pages), value=1, step=1)
-                summaries = summarize(pages, page_number)
+                text_splitter = CharacterTextSplitter()
+                summaries = summarize(text_splitter, pages, page_number)
                 st.subheader("Summary")
                 st.write(summaries)
 
@@ -80,16 +70,14 @@ if __name__ == "__main__":
                 start_page = st.number_input("Enter start page", min_value=1, max_value=len(pages), value=1, step=1)
                 end_page = st.number_input("Enter end page", min_value=start_page, max_value=len(pages), value=start_page, step=1)
 
-                texts = []
-                for page_number in range(start_page, end_page+1):
-                    view = pages[page_number-1]
-                    texts.append(view.page_content)
-                summaries = summarize(texts, 0)
+                text_splitter = CharacterTextSplitter()
+                summaries = summarize(text_splitter, pages, start_page-1)
                 st.subheader("Summary")
                 st.write(summaries)
 
             elif page_selection == "Overall Summary":
-                summaries = summarize(pages, 0)
+                text_splitter = CharacterTextSplitter()
+                summaries = summarize(text_splitter, pages, 0)
                 st.subheader("Summary")
                 st.write(summaries)
 
