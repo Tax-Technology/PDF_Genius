@@ -16,19 +16,30 @@ class CharacterTextSplitter:
     def split_text(self, text_content):
         return [text_content[i:i+self.chunk_size] for i in range(0, len(text_content), self.chunk_size-self.chunk_overlap)]
 
-def summarize(llm, text_splitter, pages, page_number):
-    view = pages[page_number - 1]
-    chain = load_summarize_chain(llm, chain_type="map_reduce")
-    summaries = chain.run(Document(page_content=t) for t in text_splitter.split_text(view.page_content))
-    return summaries
+class MyLLMChain(LLMChain):
+    def __init__(self, llm):
+        super().__init__(llm)
 
-def answer_question(llm, pages, question, cache={}):
-    if question in cache:
-        return cache[question]
-    chain = load_qa_chain(llm, chain_type="seq2seq")
-    answer = chain.run(pages, question)
-    cache[question] = answer
-    return answer
+    def agenerate_prompt(self, prompt):
+        return self.llm.generate_prompt(prompt)
+
+    def apredict(self, documents):
+        return self.llm.predict(documents)
+
+    def apredict_messages(self, documents):
+        return self.llm.predict_messages(documents)
+
+    def generate_prompt(self, prompt):
+        return self.llm.generate_prompt(prompt)
+
+    def invoke(self, documents, prompt):
+        return self.llm.invoke(documents, prompt)
+
+    def predict(self, documents):
+        return self.llm.predict(documents)
+
+    def predict_messages(self, documents):
+        return self.llm.predict_messages(documents)
 
 if __name__ == "__main__":
     st.title("Elaine’s PDF Assistant")
@@ -54,22 +65,25 @@ if __name__ == "__main__":
                 st.error("Error: Invalid OpenAI API key. Please provide a valid key.")
                 st.stop()
 
-        st.subheader("Prompt:")
-        prompt = st.text_input("Enter your prompt:")
+            text_splitter = CharacterTextSplitter()
 
-        if st.button("Summarize"):
-            if prompt:
-                text_splitter = CharacterTextSplitter()
-                summaries = summarize(llm, text_splitter, pages, 0)
-                st.subheader("Summary")
-                st.write(summaries)
-            else:
-                st.warning("Please provide a prompt.")
+            st.subheader("Prompt:")
+            prompt = st.text_input("Enter your prompt:")
 
-        if st.button("Ask Question"):
-            if prompt:
-                answer = answer_question(llm, pages, prompt)
-                st.subheader("Answer")
-                st.write(answer)
-            else:
-                st.warning("Please provide a prompt.")
+            if st.button("Summarize"):
+                if prompt:
+                    summaries = summarize(llm, text_splitter, pages, 0)
+                    st.subheader("Summaries")
+                    st.write(summaries)
+                else:
+                    st.warning("Please provide a prompt.")
+
+            if st.button("Ask Question"):
+                if prompt:
+                    chain = MyLLMChain(llm)
+                    answer = answer_question(chain, pages, prompt)
+                    st.subheader("Answer")
+                    st.write(answer)
+                else:
+                    st.warning("Please provide a prompt.")
+
