@@ -16,13 +16,13 @@ class CharacterTextSplitter:
     def split_text(self, text_content):
         return [text_content[i:i+self.chunk_size] for i in range(0, len(text_content), self.chunk_size-self.chunk_overlap)]
 
-def summarize(text_splitter, pages, page_number):
+def summarize(llm, text_splitter, pages, page_number):
     view = pages[page_number - 1]
     chain = load_summarize_chain(llm, chain_type="map_reduce")
     summaries = chain.run(Document(page_content=t) for t in text_splitter.split_text(view.page_content))
     return summaries
 
-def answer_question(pages, question, cache={}):
+def answer_question(llm, pages, question, cache={}):
     if question in cache:
         return cache[question]
     chain = load_qa_chain(llm, chain_type="seq2seq")
@@ -46,38 +46,30 @@ if __name__ == "__main__":
             st.error("Error: Invalid PDF file. Please provide a valid PDF.")
             st.stop()
 
-        page_selection = st.radio("Page selection", ["Single page", "Page range", "Overall Summary", "Question"])
+        openai_api_key = st.text_input("Enter your OpenAI API key:")
+        if openai_api_key:
+            try:
+                llm = OpenAIEmbeddings(openai_api_key=openai_api_key, temperature=0)
+            except Exception as e:
+                st.error("Error: Invalid OpenAI API key. Please provide a valid key.")
+                st.stop()
 
-        if page_selection == "Single page":
-            page_number = st.number_input("Enter page number", min_value=1, max_value=len(pages), value=1, step=1)
-            text_splitter = CharacterTextSplitter()
-            summaries = summarize(text_splitter, pages, page_number)
-            st.subheader("Summary")
-            st.write(summaries)
+        st.subheader("Prompt:")
+        prompt = st.text_input("Enter your prompt:")
 
-        elif page_selection == "Page range":
-            start_page = st.number_input("Enter start page", min_value=1, max_value=len(pages), value=1, step=1)
-            end_page = st.number_input("Enter end page", min_value=start_page, max_value=len(pages), value=start_page, step=1)
+        if st.button("Summarize"):
+            if prompt:
+                text_splitter = CharacterTextSplitter()
+                summaries = summarize(llm, text_splitter, pages, 0)
+                st.subheader("Summary")
+                st.write(summaries)
+            else:
+                st.warning("Please provide a prompt.")
 
-            text_splitter = CharacterTextSplitter()
-            summaries = summarize(text_splitter, pages, start_page-1)
-            st.subheader("Summary")
-            st.write(summaries)
-
-        elif page_selection == "Overall Summary":
-            text_splitter = CharacterTextSplitter()
-            summaries = summarize(text_splitter, pages, 0)
-            st.subheader("Summary")
-            st.write(summaries)
-
-        elif page_selection == "Question":
-            openai_api_key = st.text_input("Enter your OpenAI API key:")
-            if openai_api_key:
-                try:
-                    llm = OpenAIEmbeddings(openai_api_key=openai_api_key, temperature=0)
-                except Exception as e:
-                    st.error("Error: Invalid OpenAI API key. Please provide a valid key.")
-                    st.stop()
-                question = st.text_input("Enter your question")
-                answer = answer_question(pages, question)
-                st.write("Answer:", answer)
+        if st.button("Ask Question"):
+            if prompt:
+                answer = answer_question(llm, pages, prompt)
+                st.subheader("Answer")
+                st.write(answer)
+            else:
+                st.warning("Please provide a prompt.")
